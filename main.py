@@ -15,11 +15,53 @@
 # limitations under the License.
 #
 import webapp2
+import os
+import jinja2
+
+from google.appengine.ext import db
+
+template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
+     autoescape = True)
 
 class MainHandler(webapp2.RequestHandler):
+    def write(self, *a, **kw):
+        self.response.out.write(*a, **kw)
+
+    def render_str(self, template, **params):
+        t = jinja_env.get_template(template)
+        return t.render(params)
+
+    def render(self, template, **kw):
+        self.write(self.render_str(template, **kw))
+
+class Blog(db.Model):
+    title = db.StringProperty(required= True)
+    blog = db.TextProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+
+class MainPage(MainHandler):
+
+    def render_blog(self, title="",blog="",error=""):
+        blogs = db.GqlQuery("SELECT * FROM Blog ORDER BY created desc")
+        self.render("blog.html", title=title, blog=blog,error=error, blogs = blogs)
+
     def get(self):
-        self.response.write('Hello world!')
+        self.render_blog()
+
+
+    def post(self):
+        title = self.request.get("title")
+        blog = self.request.get("blog")
+
+        if title and blog:
+            b = Blog(title=title, blog=blog)
+            b.put()
+            self.redirect("/")
+        else:
+            error = "We need both a title and a post for the blog!"
+            self.render_blog(title, blog, error = error)
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainPage)
 ], debug=True)
