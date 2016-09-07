@@ -64,14 +64,35 @@ class BlogHandler(MainHandler):
 		if title and blog:
 			b = Blog(title=title, blog=blog)
 			b.put()
-			self.redirect("/blog")
+			blogid = str(b.key().id())
+			self.redirect('/blog/%s' %blogid)
+			# self.redirect("/blog")
 			# self.render("blog.html")
 		else:
 			error = "We need both a title and a post for the blog!"
 			self.render_post(title, blog, error = error)
 
+class ViewPostHandler(MainHandler):
+
+    def render_post(self, postid="", error=""):
+    	self.render("permalink.html", postid=postid, error=error)
+
+    def get(self):
+	 	self.render_post()
+
+    def get(self, post_id):
+        postid = Blog.get_by_id(int(post_id))
+        self.render("permalink.html", postid = postid)
+        #create error message if id doesn't exist:
+        if postid:
+        	self.render("permalink.html", postid = postid)
+
+        else:
+        	self.error(404)
+
+
 app = webapp2.WSGIApplication([
     ('/blog', MainPage),
-    ('/newpost', BlogHandler)
-    # webapp2.Route('/blog/<id:\d+>', ViewPostHandler)
+    ('/blog/newpost', BlogHandler),
+    webapp2.Route('/blog/<post_id:\d+>', ViewPostHandler)
 ], debug=True)

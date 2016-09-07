@@ -4,9 +4,10 @@
     <hr>
     {% for blog in blogs %}
     <div class= "blog">
-        <div class= "blog-title">{{blog.title}}</div>
-        <pre class="blog-body">{{blog.blog}}</pre>
+        <a class = "blog-title" href = "blog/{{blog.key().id()}}">{{blog.title}}</a>
+        <p class="blog-body">{{blog.blog}}</p>
     </div>
     {% endfor %}
 
 {% endblock %}
+
